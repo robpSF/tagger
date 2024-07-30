@@ -43,6 +43,9 @@ if openai_api_key:
             personas_df['Follower Tags'] = personas_df['Name'].apply(lambda name: get_tags_for_persona(name, unique_tags))
             st.success("Tags generated successfully!")
 
+            # Format the follower tags as CSV list
+            personas_df['Follower Tags'] = personas_df['Follower Tags'].apply(lambda x: ', '.join([tag.strip() for tag in x.split(',')]))
+
             # Create a new table with Name, Handle, and Follower Tags
             result_df = personas_df[['Name', 'Handle', 'Follower Tags']]
             st.dataframe(result_df)
