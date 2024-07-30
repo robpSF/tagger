@@ -123,6 +123,9 @@ if openai_api_key:
 
             st.success("Tags and probabilities generated successfully!")
 
+            # Filter personas with non-empty Follower Tags
+            personas_with_tags = personas_df.dropna(subset=['Follower Tags'])
+
             # Generate possible followers for each persona
             results = []
             for _, persona in personas_with_tags.iterrows():
