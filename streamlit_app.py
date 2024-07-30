@@ -24,8 +24,11 @@ if openai_api_key:
         personas_df = pd.read_excel(personas_file)
         unique_tags = extract_unique_tags(personas_df['Tags'])
 
+        # Print the array of unique tags for debugging
+        st.write("Unique Tags:", unique_tags)
+
         def get_tags_for_persona(persona, tags):
-            prompt = f"Given the persona {persona} and possible tags {', '.join(tags)}, provide the likely demographics (e.g., age, gender) of the followers."
+            prompt = f"Given the person {persona} and possible tags {', '.join(tags)}, which tags are most likely to identify the social media followers of {persona}"
             response = openai.ChatCompletion.create(
                 model="gpt-4",
                 messages=[
@@ -37,24 +40,20 @@ if openai_api_key:
             return response.choices[0].message['content']
 
         if st.button("Generate Tags for All Personas"):
-            personas_df['Tags'] = personas_df['Name'].apply(lambda name: get_tags_for_persona(name, unique_tags))
+            personas_df['Follower Tags'] = personas_df['Name'].apply(lambda name: get_tags_for_persona(name, unique_tags))
             st.success("Tags generated successfully!")
 
-        # Display and Edit Tags
-        for i, row in personas_df.iterrows():
-            st.subheader(row['Name'])
-            tags = st.text_input(f"Tags for {row['Name']}", row['Tags'] if 'Tags' in row else '')
-            personas_df.at[i, 'Tags'] = tags
+        # Create a table with Name, Handle, Follower Tags
+        result_df = personas_df[['Name', 'Handle', 'Follower Tags']]
+        st.dataframe(result_df)
 
         # Save the results
         if st.button("Save Tags"):
-            csv = personas_df.to_csv(index=False)
+            csv = result_df.to_csv(index=False)
             b64 = base64.b64encode(csv.encode()).decode()
             href = f'<a href="data:file/csv;base64,{b64}" download="tagged_personas.csv">Download CSV file</a>'
             st.markdown(href, unsafe_allow_html=True)
             st.success("Tags saved successfully!")
-
-        st.dataframe(personas_df)
     else:
         st.warning('Please upload the Personas Excel file to proceed.')
 else:
