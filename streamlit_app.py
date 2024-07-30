@@ -74,7 +74,7 @@ if openai_api_key:
                       "##OUTPUT EXAMPLE\n"
                       "male, republican, under 35")
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-4o-mini,
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
@@ -119,12 +119,13 @@ if openai_api_key:
                 st.markdown(href, unsafe_allow_html=True)
                 st.success("CSV file saved successfully!")
 
-            if st.button("Save as Excel"):
-                excel = to_excel(result_df)
-                b64 = base64.b64encode(excel).decode()
-                href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="tagged_personas.xlsx">Download Excel file</a>'
-                st.markdown(href, unsafe_allow_html=True)
-                st.success("Excel file saved successfully!")
+            excel_data = to_excel(result_df)
+            st.download_button(
+                label="Download Filtered Data as Excel",
+                data=excel_data,
+                file_name='tagged_personas.xlsx',
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
     else:
         st.warning('Please upload the Personas Excel file to proceed.')
 else:
