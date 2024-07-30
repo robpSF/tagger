@@ -9,6 +9,29 @@ def extract_unique_tags(tags_series):
     tags_series.dropna().apply(lambda x: [all_tags.add(tag.strip()) for tag in x.split(',')])
     return sorted(all_tags)
 
+# Function to calculate probability based on TwFollowers
+def calculate_probability(tw_followers):
+    if tw_followers < 1000:
+        return 0.1
+    elif 1000 <= tw_followers < 5000:
+        return 0.2
+    elif 5000 <= tw_followers < 10000:
+        return 0.3
+    elif 10000 <= tw_followers < 50000:
+        return 0.4
+    elif 50000 <= tw_followers < 100000:
+        return 0.5
+    elif 100000 <= tw_followers < 500000:
+        return 0.6
+    elif 500000 <= tw_followers < 1000000:
+        return 0.7
+    elif 1000000 <= tw_followers < 4000000:
+        return 0.8
+    elif 4000000 <= tw_followers < 8000000:
+        return 0.9
+    else:
+        return 1.0
+
 # Input field for OpenAI API key
 openai_api_key = st.text_input('Enter your OpenAI API Key', type='password')
 
@@ -35,7 +58,7 @@ if openai_api_key:
                       "##OUTPUT EXAMPLE\n"
                       "male, republican, under 35")
             response = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
+                model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
@@ -63,10 +86,13 @@ if openai_api_key:
             # Merge the tags back to the main DataFrame
             personas_df['Follower Tags'] = personas_df['Name'].map(dict(zip(filtered_personas_df['Name'], follower_tags))).fillna('')
 
-            st.success("Tags generated successfully!")
+            # Calculate the probability for each persona based on TwFollowers
+            personas_df['Probability'] = personas_df['TwFollowers'].apply(calculate_probability)
 
-            # Create a new table with Name, Handle, and Follower Tags
-            result_df = personas_df[['Name', 'Handle', 'Follower Tags']]
+            st.success("Tags and probabilities generated successfully!")
+
+            # Create a new table with Name, Handle, Follower Tags, and Probability
+            result_df = personas_df[['Name', 'Handle', 'Follower Tags', 'Probability']]
             st.dataframe(result_df)
 
             # Save the results
