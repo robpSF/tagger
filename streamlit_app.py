@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import openai
 import base64
+from io import BytesIO
 
 # Function to extract unique tags
 def extract_unique_tags(tags_series):
@@ -31,6 +32,15 @@ def calculate_probability(tw_followers):
         return 0.9
     else:
         return 1.0
+
+# Function to convert DataFrame to Excel
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, index=False, sheet_name='Sheet1')
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
 
 # Input field for OpenAI API key
 openai_api_key = st.text_input('Enter your OpenAI API Key', type='password')
@@ -102,12 +112,19 @@ if openai_api_key:
             st.dataframe(result_df)
 
             # Save the results
-            if st.button("Save Tags"):
+            if st.button("Save as CSV"):
                 csv = result_df.to_csv(index=False)
                 b64 = base64.b64encode(csv.encode()).decode()
                 href = f'<a href="data:file/csv;base64,{b64}" download="tagged_personas.csv">Download CSV file</a>'
                 st.markdown(href, unsafe_allow_html=True)
-                st.success("Tags saved successfully!")
+                st.success("CSV file saved successfully!")
+
+            if st.button("Save as Excel"):
+                excel = to_excel(result_df)
+                b64 = base64.b64encode(excel).decode()
+                href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="tagged_personas.xlsx">Download Excel file</a>'
+                st.markdown(href, unsafe_allow_html=True)
+                st.success("Excel file saved successfully!")
     else:
         st.warning('Please upload the Personas Excel file to proceed.')
 else:
