@@ -28,7 +28,12 @@ if openai_api_key:
         st.write("Unique Tags:", unique_tags)
 
         def get_tags_for_persona(persona, tags):
-            prompt = f"Given the person {persona} and possible tags {', '.join(tags)}, which tags are most likely to identify the social media followers of {persona}"
+            prompt = (f"Given the person {persona} and possible tags {', '.join(tags)}, which tags are most likely to "
+                      f"identify the social media followers of {persona}. \n"
+                      "##OUTPUT \n"
+                      "Output to a CSV list of tags \n"
+                      "##EXAMPLE \n"
+                      "male, republican, under 30")
             response = openai.ChatCompletion.create(
                 model="gpt-4",
                 messages=[
