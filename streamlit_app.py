@@ -45,18 +45,24 @@ if openai_api_key:
             return response.choices[0].message['content']
 
         if st.button("Generate Tags for All Personas"):
+            # Filter personas based on faction starting with '_'
+            filtered_personas_df = personas_df[personas_df['Faction'].str.startswith('_', na=False)]
+            total_personas = len(filtered_personas_df)
+
             # Initialize the progress bar
             progress_bar = st.progress(0)
-            total_personas = len(personas_df)
 
             # Generate tags for each persona with progress tracking
             follower_tags = []
-            for i, name in enumerate(personas_df['Name']):
+            for i, row in filtered_personas_df.iterrows():
+                name = row['Name']
                 tags = get_tags_for_persona(name, unique_tags)
                 follower_tags.append(tags)
                 progress_bar.progress((i + 1) / total_personas)
 
-            personas_df['Follower Tags'] = follower_tags
+            # Merge the tags back to the main DataFrame
+            personas_df['Follower Tags'] = personas_df['Name'].map(dict(zip(filtered_personas_df['Name'], follower_tags))).fillna('')
+
             st.success("Tags generated successfully!")
 
             # Create a new table with Name, Handle, and Follower Tags
