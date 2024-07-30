@@ -43,17 +43,17 @@ if openai_api_key:
             personas_df['Follower Tags'] = personas_df['Name'].apply(lambda name: get_tags_for_persona(name, unique_tags))
             st.success("Tags generated successfully!")
 
-        # Create a table with Name, Handle, Follower Tags
-        result_df = personas_df[['Name', 'Handle', 'Follower Tags']]
-        st.dataframe(result_df)
+            # Create a new table with Name, Handle, and Follower Tags
+            result_df = personas_df[['Name', 'Handle', 'Follower Tags']]
+            st.dataframe(result_df)
 
-        # Save the results
-        if st.button("Save Tags"):
-            csv = result_df.to_csv(index=False)
-            b64 = base64.b64encode(csv.encode()).decode()
-            href = f'<a href="data:file/csv;base64,{b64}" download="tagged_personas.csv">Download CSV file</a>'
-            st.markdown(href, unsafe_allow_html=True)
-            st.success("Tags saved successfully!")
+            # Save the results
+            if st.button("Save Tags"):
+                csv = result_df.to_csv(index=False)
+                b64 = base64.b64encode(csv.encode()).decode()
+                href = f'<a href="data:file/csv;base64,{b64}" download="tagged_personas.csv">Download CSV file</a>'
+                st.markdown(href, unsafe_allow_html=True)
+                st.success("Tags saved successfully!")
     else:
         st.warning('Please upload the Personas Excel file to proceed.')
 else:
