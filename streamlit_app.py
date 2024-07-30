@@ -42,6 +42,22 @@ def to_excel(df):
     processed_data = output.getvalue()
     return processed_data
 
+# Function to find possible followers
+def find_possible_followers(persona_tags, all_personas, min_matches=2):
+    possible_followers = []
+    for _, follower in all_personas.iterrows():
+        follower_tags = follower['Tags'].split(', ')
+        match_count = sum(1 for tag in persona_tags if tag in follower_tags)
+        if match_count >= min_matches and match_count < len(persona_tags):
+            possible_followers.append((follower['Name'], follower['Handle'], match_count))
+    return possible_followers
+
+# Function to apply probability and rank followers
+def apply_probability_and_rank(followers, probability):
+    followers.sort(key=lambda x: x[2], reverse=True)  # Sort by match_count
+    num_to_select = int(len(followers) * probability)
+    return followers[:num_to_select]
+
 # Input field for OpenAI API key
 openai_api_key = st.text_input('Enter your OpenAI API Key', type='password')
 
@@ -74,7 +90,7 @@ if openai_api_key:
                       "##OUTPUT EXAMPLE\n"
                       "male, republican, under 35")
             response = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
+                model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
@@ -107,19 +123,28 @@ if openai_api_key:
 
             st.success("Tags and probabilities generated successfully!")
 
-            # Create a new table with Name, Handle, Follower Tags, and Probability
-            result_df = personas_df[['Name', 'Handle', 'Follower Tags', 'Probability']]
-            st.dataframe(result_df)
+            # Generate possible followers for each persona
+            results = []
+            for _, persona in personas_with_tags.iterrows():
+                persona_name = persona['Name']
+                persona_tags = persona['Follower Tags'].split(', ')
+                possible_followers = find_possible_followers(persona_tags, personas_df)
+                likely_followers = apply_probability_and_rank(possible_followers, persona['Probability'])
+                for follower in likely_followers:
+                    results.append({'Follower': follower[0], 'Follower Handle': follower[1], 'Followed Persona': persona_name})
 
-            # Save the results
+            results_df = pd.DataFrame(results)
+            st.dataframe(results_df)
+
+            # Save the results as CSV and Excel
             if st.button("Save as CSV"):
-                csv = result_df.to_csv(index=False)
+                csv = results_df.to_csv(index=False)
                 b64 = base64.b64encode(csv.encode()).decode()
                 href = f'<a href="data:file/csv;base64,{b64}" download="tagged_personas.csv">Download CSV file</a>'
                 st.markdown(href, unsafe_allow_html=True)
                 st.success("CSV file saved successfully!")
 
-            excel_data = to_excel(result_df)
+            excel_data = to_excel(results_df)
             st.download_button(
                 label="Download Filtered Data as Excel",
                 data=excel_data,
