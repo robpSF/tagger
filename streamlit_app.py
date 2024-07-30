@@ -28,14 +28,14 @@ if openai_api_key:
         st.write("Unique Tags:", unique_tags)
 
         def get_tags_for_persona(persona, tags):
-            prompt = (f"Given the person {persona} and possible tags {', '.join(tags)}, which tags are most likely to "
-                      f"identify the social media followers of {persona}. \n"
-                      "##OUTPUT \n"
-                      "Output to a CSV list of tags \n"
-                      "##EXAMPLE \n"
-                      "male, republican, under 30")
+            prompt = (f"Given what you know about this person - {persona} - which of these tags - {', '.join(tags)} - could be applied to the audience that follow them on social media?\n"
+                      "##RULES\n"
+                      "1. You must take tags from the list\n"
+                      "2. If you don't know, return \"unknowable\"\n"
+                      "##OUTPUT EXAMPLE\n"
+                      "male, republican, under 35")
             response = openai.ChatCompletion.create(
-                model="gpt-4o",
+                model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
@@ -45,11 +45,19 @@ if openai_api_key:
             return response.choices[0].message['content']
 
         if st.button("Generate Tags for All Personas"):
-            personas_df['Follower Tags'] = personas_df['Name'].apply(lambda name: get_tags_for_persona(name, unique_tags))
-            st.success("Tags generated successfully!")
+            # Initialize the progress bar
+            progress_bar = st.progress(0)
+            total_personas = len(personas_df)
 
-            # Format the follower tags as CSV list
-            personas_df['Follower Tags'] = personas_df['Follower Tags'].apply(lambda x: ', '.join([tag.strip() for tag in x.split(',')]))
+            # Generate tags for each persona with progress tracking
+            follower_tags = []
+            for i, name in enumerate(personas_df['Name']):
+                tags = get_tags_for_persona(name, unique_tags)
+                follower_tags.append(tags)
+                progress_bar.progress((i + 1) / total_personas)
+
+            personas_df['Follower Tags'] = follower_tags
+            st.success("Tags generated successfully!")
 
             # Create a new table with Name, Handle, and Follower Tags
             result_df = personas_df[['Name', 'Handle', 'Follower Tags']]
