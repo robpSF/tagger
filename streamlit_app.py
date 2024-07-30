@@ -47,8 +47,14 @@ if openai_api_key:
         personas_df = pd.read_excel(personas_file)
         unique_tags = extract_unique_tags(personas_df['Tags'])
 
-        # Print the array of unique tags for debugging
-        st.write("Unique Tags:", unique_tags)
+        # Multiselect widget for removing generic tags
+        tags_to_remove = st.multiselect('Select tags to remove', unique_tags)
+
+        # Remove selected tags from the unique tags list
+        filtered_tags = [tag for tag in unique_tags if tag not in tags_to_remove]
+
+        # Print the array of filtered tags for debugging
+        st.write("Filtered Tags:", filtered_tags)
 
         def get_tags_for_persona(persona, tags):
             prompt = (f"Given what you know about this person - {persona} - which of these tags - {', '.join(tags)} - could be applied to the audience that follow them on social media?\n"
@@ -79,7 +85,7 @@ if openai_api_key:
             follower_tags = []
             for i, row in filtered_personas_df.iterrows():
                 name = row['Name']
-                tags = get_tags_for_persona(name, unique_tags)
+                tags = get_tags_for_persona(name, filtered_tags)
                 follower_tags.append(tags)
                 progress_bar.progress((i + 1) / total_personas)
 
